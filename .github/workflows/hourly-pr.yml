@@ -1,0 +1,33 @@
+name: Hourly Test PR
+on:
+  schedule:
+    - cron: '0 * * * *'
+  workflow_dispatch:
+
+jobs:
+  generate-test-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set date variable
+        id: vars
+        run: echo "date=$(date -u +'%Y-%m-%d-%H-%M')" >> "$GITHUB_OUTPUT"
+
+      - name: Create test file
+        run: |
+          echo "console.log('Test file for PR created on ${DATE}');" > test-${DATE}.ts
+        env:
+          DATE: ${{ steps.vars.outputs.date }}
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: test-${{ steps.vars.outputs.date }}
+          commit-message: Automated test file update
+          title: Test${{ steps.vars.outputs.date }}
+          body: |
+            Automated pull request generated on ${{ steps.vars.outputs.date }}.
+          base: main
+          delete-branch: true
